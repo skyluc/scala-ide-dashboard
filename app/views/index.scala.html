@@ -20,7 +20,7 @@
         -
       } else {
 	      @for(pr <- project._2.sortBy(_.number)) {
-	        <a class="pr" href="@pr.url">@pr.number</a>
+	        <a class="pr" href="@pr.url" target="_blank">@pr.number</a>
 	      }
       }
       </div>

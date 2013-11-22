@@ -7,6 +7,10 @@ import scala.concurrent.Future
 import model.PullRequest
 import model.Project
 import play.Play
+import play.api.libs.iteratee.Concurrent
+import play.api.libs.iteratee.Concurrent.Channel
+import play.api.libs.iteratee.Iteratee
+import views.xml.project
 
 object Application extends Controller {
 
@@ -23,16 +27,26 @@ object Application extends Controller {
 
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
-  def index = Action.async {
-
-    getData.map { pullRequests =>
-      Ok(views.html.index(pullRequests))
-    }
-
+  def index =  Action { request =>
+    Ok(views.html.index(Project.allProjects))
   }
 
-  private def getData(): Future[Seq[(Project, Seq[PullRequest])]] = {
-    val fs = Project.allProjects.map { p =>
+  def ws = WebSocket.using[String] { request =>
+
+    //Concurernt.broadcast returns (Enumerator, Concurrent.Channel)
+    val (out, channel) = Concurrent.broadcast[String]
+
+    //log the message to stdout and send response back to client
+    val in = Iteratee.foreach[String] {
+      msg =>
+        println(msg)
+        populateProjects(channel)
+    }
+    (in, out)
+  }
+
+  def populateProjects(channel: Channel[String]) = {
+    Project.allProjects.foreach { p =>
       WS.url(BaseGitHubURL + RepoAPI + p.githubRepo + PullRequestCommand + AccessTokenParam).get().map { response =>
         import model.PullRequestReader._
 
@@ -42,10 +56,11 @@ object Application extends Controller {
             println(a)
             Nil
         }.get
-        (p, prs)
+        
+        channel.push(views.xml.project(p, prs).body)
       }
     }
-    Future.sequence(fs)
   }
+
 
 }

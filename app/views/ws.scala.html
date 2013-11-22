@@ -1,0 +1,29 @@
+@* ws Template File *@
+@(param: Any)
+
+@main {
+  <h1>WebSocket test</h1>
+  
+  <div id="blob">
+  </div>
+  
+  <script type="text/javascript">
+
+    function message(msg) {
+        $('#blob').append(msg)
+    }
+  
+    var socket = new WebSocket("ws://localhost:9000/ws/socket");
+
+    socket.onopen = function() {
+        message("<p>WebSocket opened</p>");
+        socket.send("go")
+    }
+
+    socket.onmessage = function(msg) {
+        message(msg.data);
+    }
+        
+    
+  </script>
+}

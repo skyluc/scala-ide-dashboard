@@ -1,0 +1,16 @@
+@(project: model.Project, pullRequests: Seq[model.PullRequest])
+
+@import views.HtmlSupport._
+
+<div class="project" id="@{cssIdFor(project)}">
+  <div class="project-name"><a href="https://github.com/@project.githubRepo">@project.name</a></div>
+  <div class="project-pr"><span class="label">open PRs:</span>
+  @if(pullRequests.isEmpty) {
+    -
+  } else {
+    @for(pr <- pullRequests.sortBy(_.number)) {
+      <a class="pr" href="@pr.url" target="_blank">@pr.number</a>
+    }
+  }
+  </div>
+</div>
